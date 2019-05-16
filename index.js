@@ -5,6 +5,8 @@ const logsPath = 'C:/Projects/DanskeSpil.Website/develop/Website/App_data/logs/'
 let logFile
 let previousLogFile
 
+const now = new Date().toString().slice(16, 24)
+
 function findLatestLogFile() {
   fs.readdir(logsPath, function (err, files) {
     //handling error
@@ -37,36 +39,38 @@ const tailOptions = {
   logger: console
 }
 
+
+
 function tailIt(file) {
   console.log(`\n\n ---------------- LOGGING FROM: ${file} ---------------- \n\n`)
   tail = new Tail(`${logsPath}${file}`, tailOptions)
 
   tail.on("line", function (data) {
-    if (data.indexOf('INFO') > -1) {
-      return
-    }
+    if (data.trim() === '') return
+    if (data.indexOf('INFO') > -1) return
+    if (data.indexOf('DEBUG') > -1) return
 
     if (data.indexOf('ERROR') > -1) {
-      console.log(colors.Underscore, data)
+      colorLine(data, colors.FgYellow)
       return
     }
 
-    if (data.indexOf('WARN  Unable to bind the source item') > -1) {
-      console.log(colors.FgYellow, data)
-      return
-    }
-    
     if (data.indexOf('WARN') > -1) {
-      console.log(colors.FgCyan, data)
+      colorLine(data, colors.FgWhite)
       return
     }
 
-    console.log(colors.Reset, data)
+    colorLine(data)
   });
 
   tail.on("error", function (error) {
     console.log('ERROR: ', error)
   });
+}
+
+function colorLine(data, color) {
+  color = color ? color : colors.FgCyan
+  return console.log(`${colors.Reset}${colors.FgCyan}${colors.BgBlack}%s${colors.Reset}${colors.BgBlack}${color}`, `${now}`, ` ${data}`)
 }
 
 findLatestLogFile()
